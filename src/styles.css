@@ -1,0 +1,370 @@
+:root {
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #1a1a1a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f4f5f7;
+}
+
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+h1 {
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  margin-top: 0;
+  color: #6b7280;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: -1px;
+}
+
+.tab {
+  border: 1px solid #e5e7eb;
+  border-bottom: none;
+  background: #f0f1f3;
+  color: #6b7280;
+  border-radius: 8px 8px 0 0;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.tab.is-active {
+  background: #fff;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.editor {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0 10px 10px 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* ---- colunas editáveis (nós Tiptap) ---- */
+.cols-editable {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 3rem;
+  margin: 1rem 0;
+}
+
+.cols-editable .col {
+  min-width: 0;
+}
+
+.cols-editable .col > * + * {
+  margin-top: 0.5rem;
+}
+
+/* coluna destacada como alvo ao arrastar a imagem */
+.cols-editable .col.col-drop-target {
+  outline: 2px dashed #3b82f6;
+  outline-offset: -2px;
+  background: #eff6ff;
+  border-radius: 6px;
+}
+
+@media (max-width: 640px) {
+  .cols-editable {
+    grid-auto-flow: row;
+  }
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+
+.tb-btn {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.tb-btn:hover {
+  background: #f3f4f6;
+}
+
+.tb-btn.is-active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.tb-sep {
+  width: 1px;
+  align-self: stretch;
+  background: #e5e7eb;
+  margin: 0 4px;
+}
+
+.editor-content .ProseMirror {
+  min-height: 300px;
+  padding: 16px 16px 16px 50px;
+  outline: none;
+}
+
+.editor-content .ProseMirror > * + * {
+  margin-top: 0.75em;
+}
+
+/* limpa floats para o conteúdo não vazar do editor */
+.editor-content .ProseMirror::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+.img-wrapper {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  max-width: 100%;
+}
+
+.img-wrapper img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  display: block;
+}
+
+/* alinhamentos */
+.img-wrapper.align-left {
+  float: left;
+  margin: 0 1rem 0.5rem 0;
+}
+
+.img-wrapper.align-right {
+  float: right;
+  margin: 0 0 0.5rem 1rem;
+}
+
+.img-wrapper.align-center {
+  display: block;
+  width: fit-content;
+  margin: 0.5rem auto;
+}
+
+.img-wrapper.is-selected img {
+  outline: 2px solid #3b82f6;
+}
+
+/* barras laterais de redimensionar (estilo Notion) */
+.img-handle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 38px;
+  max-height: 60%;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid #fff;
+  border-radius: 4px;
+  cursor: ew-resize;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.img-handle-left {
+  left: 6px;
+}
+
+.img-handle-right {
+  right: 6px;
+}
+
+.img-wrapper:hover .img-handle,
+.img-wrapper.is-selected .img-handle {
+  opacity: 1;
+}
+
+/* arraste para posicionar */
+.img-wrapper img {
+  cursor: grab;
+}
+
+.img-wrapper.is-dragging img {
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
+.img-drop-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ---- handle de bloco estilo Notion (+ ⠿) ---- */
+.dh-group {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.dh-plus,
+.dh-grip {
+  width: 20px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  padding: 0;
+}
+
+.dh-plus {
+  color: #9ca3af;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dh-grip {
+  background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23999'%3E%3Ccircle cx='5' cy='4' r='1.4'/%3E%3Ccircle cx='11' cy='4' r='1.4'/%3E%3Ccircle cx='5' cy='8' r='1.4'/%3E%3Ccircle cx='11' cy='8' r='1.4'/%3E%3Ccircle cx='5' cy='12' r='1.4'/%3E%3Ccircle cx='11' cy='12' r='1.4'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 16px;
+  cursor: grab;
+}
+
+.dh-plus:hover,
+.dh-grip:hover {
+  background-color: #f0f1f3;
+}
+
+.dh-grip:active {
+  cursor: grabbing;
+  background-color: #e5e7eb;
+}
+
+/* linha azul indicando onde a imagem vai cair (largura/altura vêm inline) */
+.drop-indicator {
+  position: fixed;
+  background: #3b82f6;
+  border-radius: 2px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* fantasma do bloco seguindo o cursor durante o arraste */
+.drag-ghost {
+  position: fixed;
+  width: 110px;
+  max-height: 110px;
+  object-fit: cover;
+  opacity: 0.6;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  z-index: 99;
+}
+
+.drag-ghost-text {
+  width: auto;
+  max-width: 240px;
+  height: auto;
+  max-height: none;
+  object-fit: initial;
+  padding: 6px 10px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* menu "Turn into" do handle de arraste */
+.dh-menu {
+  position: fixed;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  z-index: 100;
+  min-width: 150px;
+}
+
+.dh-menu-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  padding: 4px 8px;
+}
+
+.dh-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  color: #1a1a1a;
+}
+
+.dh-item:hover {
+  background: #f3f4f6;
+}
+
+.dh-ic {
+  display: inline-flex;
+  gap: 2px;
+  margin-right: 8px;
+}
+
+.dh-ic i {
+  width: 4px;
+  height: 12px;
+  background: #9ca3af;
+  border-radius: 1px;
+}
