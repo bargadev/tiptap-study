@@ -71,6 +71,30 @@ h1 {
   min-width: 0;
 }
 
+/* alça cinza de redimensionar largura das colunas */
+.col-resizer {
+  position: fixed;
+  width: 16px;
+  transform: translateX(-50%);
+  cursor: col-resize;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+}
+
+.col-resizer::after {
+  content: '';
+  width: 3px;
+  border-radius: 3px;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.col-resizer:hover::after,
+.col-resizer:active::after {
+  background: #c7ccd1;
+}
+
 .cols-editable .col > * + * {
   margin-top: 0.5rem;
 }

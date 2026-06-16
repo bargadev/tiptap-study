@@ -1,4 +1,6 @@
 import { Node, mergeAttributes } from '@tiptap/core'
+import { Plugin } from '@tiptap/pm/state'
+import { Decoration, DecorationSet } from '@tiptap/pm/view'
 
 // Uma coluna: contém blocos editáveis (parágrafos, imagem, listas...).
 export const Column = Node.create({
@@ -70,5 +72,31 @@ export const Columns = Node.create({
             content: [col('Coluna esquerda…'), col('Centro…'), col('Coluna direita…')],
           }),
     }
+  },
+
+  // aplica grid-template-columns a partir das larguras (fr) de cada coluna,
+  // sem mexer na renderização do nó (evita quebrar o grid)
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        props: {
+          decorations(state) {
+            const decos = []
+            state.doc.descendants((node, pos) => {
+              if (node.type.name !== 'columns') return
+              const widths = []
+              node.forEach((c) => widths.push(c.attrs.width || 1))
+              const tpl = widths.map((w) => `${w}fr`).join(' ')
+              decos.push(
+                Decoration.node(pos, pos + node.nodeSize, {
+                  style: `grid-template-columns:${tpl}`,
+                })
+              )
+            })
+            return DecorationSet.create(state.doc, decos)
+          },
+        },
+      }),
+    ]
   },
 })

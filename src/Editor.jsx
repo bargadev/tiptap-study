@@ -3,6 +3,7 @@ import StarterKit from '@tiptap/starter-kit'
 import ResizableImage from './ResizableImage.js'
 import { Columns, Column } from './ColumnsNodes.js'
 import CustomDragHandle from './CustomDragHandle.jsx'
+import ColumnResizers from './ColumnResizers.jsx'
 import { useRef } from 'react'
 
 const STORAGE_KEY = 'tiptap-playground-content'
@@ -107,6 +108,7 @@ export default function Editor() {
 
       <EditorContent editor={editor} className="editor-content" />
       <CustomDragHandle editor={editor} />
+      <ColumnResizers editor={editor} />
     </div>
   )
 }
