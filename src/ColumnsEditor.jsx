@@ -97,6 +97,14 @@ export default function ColumnsEditor() {
         >
           Limpar
         </button>
+        <button
+          className="tb-btn"
+          onClick={() =>
+            import('./exportDocx.js').then((m) => m.exportToDocx(editor, 'colunas.docx'))
+          }
+        >
+          Exportar DOCX
+        </button>
       </div>
 
       <EditorContent editor={editor} className="editor-content" />

@@ -13,6 +13,7 @@
     "@tiptap/pm": "^2.11.5",
     "@tiptap/react": "^2.11.5",
     "@tiptap/starter-kit": "^2.11.5",
+    "docx": "^9.7.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tiptap-extension-global-drag-handle": "^0.1.18"

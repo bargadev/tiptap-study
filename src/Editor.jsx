@@ -104,6 +104,14 @@ export default function Editor() {
         >
           Limpar
         </button>
+        <button
+          className="tb-btn"
+          onClick={() =>
+            import('./exportDocx.js').then((m) => m.exportToDocx(editor, 'editor.docx'))
+          }
+        >
+          Exportar DOCX
+        </button>
       </div>
 
       <EditorContent editor={editor} className="editor-content" />

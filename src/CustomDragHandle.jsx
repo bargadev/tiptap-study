@@ -1,24 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { startBlockDrag } from './blockDrag.js'
+import { startBlockDrag, resolveBlock } from './blockDrag.js'
 
-// bloco mais interno sob o cursor (ignora os contêineres columns/column)
-const blockAt = (editor, x, y) => {
-  const hit = editor.view.posAtCoords({ left: x, top: y })
-  if (!hit) return null
-  const $pos = editor.state.doc.resolve(hit.pos)
-  let depth = $pos.depth
-  while (depth > 0) {
-    const n = $pos.node(depth)
-    if (n.isBlock && n.type.name !== 'columns' && n.type.name !== 'column') break
-    depth--
-  }
-  if (depth < 1) return null
-  const pos = $pos.before(depth)
-  const node = $pos.node(depth)
-  const dom = editor.view.nodeDOM(pos)
-  if (!dom || dom.nodeType !== 1) return null
-  return { pos, node, dom }
-}
+const blockAt = (editor, x, y) => resolveBlock(editor, x, y)
 
 // Handle estilo Notion (+ ⠿):
 // - "+"  insere um parágrafo abaixo do bloco
@@ -134,6 +117,46 @@ export default function CustomDragHandle({ editor }) {
     editor.view.focus()
   }
 
+  const deleteBlock = () => {
+    const t = menu?.target
+    setMenu(null)
+    if (!t || !editor) return
+    const { state } = editor
+    const $pos = state.doc.resolve(t.pos)
+    const tr = state.tr
+
+    if ($pos.parent.type.name === 'column' && $pos.parent.childCount === 1) {
+      // único bloco da coluna -> remove a coluna
+      const columnDepth = $pos.depth
+      const columnsDepth = columnDepth - 1
+      const columnsNode = $pos.node(columnsDepth)
+      const columnsPos = $pos.before(columnsDepth)
+      const columnPos = $pos.before(columnDepth)
+      const columnNode = $pos.node(columnDepth)
+
+      if (columnsNode.childCount <= 2) {
+        // restaria 1 coluna -> dissolve as colunas mantendo o conteúdo da outra
+        const remaining = []
+        columnsNode.forEach((col, off) => {
+          if (columnsPos + 1 + off === columnPos) return
+          col.forEach((child) => remaining.push(child))
+        })
+        tr.replaceWith(columnsPos, columnsPos + columnsNode.nodeSize, remaining)
+      } else {
+        tr.delete(columnPos, columnPos + columnNode.nodeSize)
+      }
+    } else {
+      tr.delete(t.pos, t.pos + t.node.nodeSize)
+    }
+
+    try {
+      editor.view.dispatch(tr)
+      editor.view.focus()
+    } catch {
+      /* delete inválido — ignora */
+    }
+  }
+
   const item = (n, label) => (
     <button className="dh-item" onClick={() => turnIntoColumns(n)}>
       <span className="dh-ic">
@@ -158,6 +181,11 @@ export default function CustomDragHandle({ editor }) {
           <div className="dh-menu-label">Turn into</div>
           {item(2, '2 colunas')}
           {item(3, '3 colunas')}
+          <div className="dh-menu-sep" />
+          <button className="dh-item dh-item-danger" onClick={deleteBlock}>
+            <span className="dh-ic-trash" aria-hidden="true">🗑</span>
+            Apagar
+          </button>
         </div>
       )}
     </>

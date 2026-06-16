@@ -4,6 +4,34 @@
 // - na borda externa (topo/base) de um bloco de colunas -> 1 linha por coluna
 //   (largura total) -> move o bloco para fora das colunas
 
+// bloco mais interno sob (x,y): trata textblocks aninhados E nós atômicos (imagem)
+export function resolveBlock(editor, x, y) {
+  const c = editor.view.posAtCoords({ left: x, top: y })
+  if (!c) return null
+  // nó atômico/folha (ex.: imagem): 'inside' aponta direto para ele
+  if (c.inside >= 0) {
+    const node = editor.state.doc.nodeAt(c.inside)
+    if (node && node.isBlock && node.type.name !== 'columns' && node.type.name !== 'column') {
+      const dom = editor.view.nodeDOM(c.inside)
+      if (dom && dom.nodeType === 1) return { pos: c.inside, node, dom }
+    }
+  }
+  // textblocks (parágrafo/título), inclusive aninhados em colunas
+  const $pos = editor.state.doc.resolve(c.pos)
+  let depth = $pos.depth
+  while (depth > 0) {
+    const n = $pos.node(depth)
+    if (n.isBlock && n.type.name !== 'columns' && n.type.name !== 'column') break
+    depth--
+  }
+  if (depth < 1) return null
+  const pos = $pos.before(depth)
+  const node = $pos.node(depth)
+  const dom = editor.view.nodeDOM(pos)
+  if (!dom || dom.nodeType !== 1) return null
+  return { pos, node, dom }
+}
+
 const getIndicator = () => {
   let el = document.getElementById('block-drop-indicator')
   if (!el) {
@@ -55,12 +83,36 @@ const insertAtPos = (editor, dragPos, dragNode, insertPos) => {
 }
 
 const createColumns = (editor, dragPos, dragNode, { targetPos, targetNode, side }) => {
-  const { schema } = editor.state
+  const { schema, doc } = editor.state
   const columnType = schema.nodes.column
   const columnsType = schema.nodes.columns
   if (!columnType || !columnsType) return
   if (targetNode.type === columnsType || dragNode.type === columnsType) return
 
+  const $t = doc.resolve(targetPos)
+
+  // alvo já está dentro de uma coluna -> adiciona nova coluna ao layout existente
+  if ($t.parent.type.name === 'column') {
+    const columnDepth = $t.depth
+    const columnsDepth = columnDepth - 1
+    const columnsNode = $t.node(columnsDepth)
+    if (columnsNode.childCount >= 3) return // máx. 3 colunas
+    const columnNode = $t.node(columnDepth)
+    const columnPos = $t.before(columnDepth)
+    const insertColPos = side === 'left' ? columnPos : columnPos + columnNode.nodeSize
+    try {
+      const tr = editor.state.tr
+      tr.delete(dragPos, dragPos + dragNode.nodeSize)
+      const mapped = tr.mapping.map(insertColPos)
+      tr.insert(mapped, columnType.create(null, dragNode))
+      editor.view.dispatch(tr)
+    } catch {
+      /* drop inválido — ignora */
+    }
+    return
+  }
+
+  // alvo no nível normal -> embrulha alvo + arrastado num bloco de 2 colunas
   const dragCol = columnType.create(null, dragNode)
   const tgtCol = columnType.create(null, targetNode)
   const cols = side === 'left' ? [dragCol, tgtCol] : [tgtCol, dragCol]
@@ -83,21 +135,10 @@ export function startBlockDrag(editor, dragPos, dragNode, ev) {
   const ghost = makeGhost(dragNode)
 
   const compute = (x, y) => {
-    const hit = editor.view.posAtCoords({ left: x, top: y })
-    if (!hit) return null
-    const $pos = editor.state.doc.resolve(hit.pos)
-    let depth = $pos.depth
-    while (depth > 0) {
-      const n = $pos.node(depth)
-      if (n.isBlock && n.type.name !== 'columns' && n.type.name !== 'column') break
-      depth--
-    }
-    if (depth < 1) return null
-    const targetPos = $pos.before(depth)
-    const targetNode = $pos.node(depth)
+    const blk = resolveBlock(editor, x, y)
+    if (!blk) return null
+    const { pos: targetPos, node: targetNode, dom } = blk
     if (targetPos === dragPos) return null
-    const dom = editor.view.nodeDOM(targetPos)
-    if (!dom || dom.nodeType !== 1) return null
     const rect = dom.getBoundingClientRect()
 
     const relX = (x - rect.left) / rect.width
