@@ -4,7 +4,8 @@ import ResizableImage from './ResizableImage.js'
 import { Columns, Column } from './ColumnsNodes.js'
 import CustomDragHandle from './CustomDragHandle.jsx'
 import ColumnResizers from './ColumnResizers.jsx'
-import { useRef } from 'react'
+import { loadContent, saveContent, clearContent } from './storage.js'
+import { useEffect, useRef } from 'react'
 
 const STORAGE_KEY = 'tiptap-playground-content'
 
@@ -19,6 +20,7 @@ const CONTENT = `
 
 export default function Editor() {
   const fileInputRef = useRef(null)
+  const saveTimer = useRef(null)
 
   const editor = useEditor({
     extensions: [
@@ -27,11 +29,24 @@ export default function Editor() {
       Columns,
       Column,
     ],
-    content: localStorage.getItem(STORAGE_KEY) || CONTENT,
+    content: CONTENT,
     onUpdate: ({ editor }) => {
-      localStorage.setItem(STORAGE_KEY, editor.getHTML())
+      clearTimeout(saveTimer.current)
+      saveTimer.current = setTimeout(() => saveContent(STORAGE_KEY, editor.getHTML()), 400)
     },
   })
+
+  // carrega o conteúdo salvo (IndexedDB) depois que o editor monta
+  useEffect(() => {
+    if (!editor) return
+    let cancelled = false
+    loadContent(STORAGE_KEY).then((html) => {
+      if (!cancelled && html) editor.commands.setContent(html, false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [editor])
 
   if (!editor) return null
 
@@ -98,7 +113,7 @@ export default function Editor() {
         <button
           className="tb-btn"
           onClick={() => {
-            localStorage.removeItem(STORAGE_KEY)
+            clearContent(STORAGE_KEY)
             editor.commands.setContent(CONTENT)
           }}
         >
@@ -110,7 +125,15 @@ export default function Editor() {
             import('./exportDocx.js').then((m) => m.exportToDocx(editor, 'editor.docx'))
           }
         >
-          Exportar DOCX
+          Exportar DOCX (InDesign)
+        </button>
+        <button
+          className="tb-btn"
+          onClick={() =>
+            import('./exportIdml.js').then((m) => m.exportToIdml(editor, 'editor.idml'))
+          }
+        >
+          Exportar IDML
         </button>
       </div>
 

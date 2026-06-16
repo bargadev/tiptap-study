@@ -27,33 +27,10 @@ h1 {
   color: #6b7280;
 }
 
-.tabs {
-  display: flex;
-  gap: 4px;
-  margin-bottom: -1px;
-}
-
-.tab {
-  border: 1px solid #e5e7eb;
-  border-bottom: none;
-  background: #f0f1f3;
-  color: #6b7280;
-  border-radius: 8px 8px 0 0;
-  padding: 8px 14px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.tab.is-active {
-  background: #fff;
-  color: #1a1a1a;
-  font-weight: 600;
-}
-
 .editor {
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 0 10px 10px 10px;
+  border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
